@@ -86,10 +86,13 @@ def tobs():
 
 @app.route("/api/v1.0/<start>")
 def starting(start):
-
-    final = start.replace(" ", "").split(",")
-    year, month, day = map(int, final)
-    start_date = dt.datetime(year, month, day)
+    try:
+        start_date = dt.datetime.strptime(start, "%m%d%Y")
+    except ValueError:
+        try:
+            start_date = dt.datetime.strptime(start, "%Y,%m,%d")
+        except ValueError:
+            start_date = dt.datetime.strptime(start, "%Y%m%d")
 
     session = Session(engine)
     query = session.query(func.min(measurement.tobs), func.max(measurement.tobs), func.avg(measurement.tobs)).filter(measurement.date >= start_date).all()
@@ -100,20 +103,27 @@ def starting(start):
         start_dict['TMIN'] = row[0]
         start_dict['TMAX'] = row[1]
         start_dict['TAVG'] = row[2]
-    
-    return(start_dict)
+
+    return start_dict
 
 
 @app.route("/api/v1.0/<start>/<end>")
 def complete(start, end):
+    try:
+        start_date = dt.datetime.strptime(start, "%m%d%Y")
+    except ValueError:
+        try:
+            start_date = dt.datetime.strptime(start, "%Y,%m,%d")
+        except ValueError:
+            start_date = dt.datetime.strptime(start, "%Y%m%d")
 
-    final_start = start.replace(" ", "").split(",")
-    year, month, day = map(int, final_start)
-    start_date = dt.datetime(year, month, day)
-
-    final_end = end.replace(" ", "").split(",")
-    year, month, day = map(int, final_end)
-    end_date = dt.datetime(year, month, day)
+    try:
+        end_date = dt.datetime.strptime(end, "%m%d%Y")
+    except ValueError:
+        try:
+            end_date = dt.datetime.strptime(end, "%Y,%m,%d")
+        except ValueError:
+            end_date = dt.datetime.strptime(end, "%Y%m%d")
 
     session = Session(engine)
     query = session.query(func.min(measurement.tobs), func.max(measurement.tobs), func.avg(measurement.tobs)).filter(measurement.date >= start_date).filter(measurement.date <= end_date).all()
@@ -124,8 +134,9 @@ def complete(start, end):
         start_end_dict['TMIN'] = row[0]
         start_end_dict['TMAX'] = row[1]
         start_end_dict['TAVG'] = row[2]
-    
-    return(start_end_dict)
+
+    return start_end_dict
+
 
 
 if __name__ == '__main__':
